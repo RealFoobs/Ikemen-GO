@@ -654,6 +654,24 @@ local motif =
 		p2_swap_snd = {-1, 0}, --Ikemen feature
 		p1_select_snd = {-1, 0}, --Ikemen feature (data read from character SND)
 		p2_select_snd = {-1, 0}, --Ikemen feature (data read from character SND)
+		enablepaletteselect = 0, --Ikemen feature
+		--p<pn>_member<num>_palette_offset = {-1, -1}, --Ikemen feature
+		--p<pn>_member<num>_palette_font = {-1, -1, -1}, --Ikemen feature
+		--p<pn>_member<num>_palette_scale = {-1, -1}, --Ikemen featurefeature
+		--p<pn>_palette_offset = {-1, -1, -1}, --Ikemen feature
+		--p<pn>_palette_font = {-1, -1, -1}, --Ikemen feature
+		--p<pn>_palette_scale = {-1, -1}, --Ikemen feature
+		--p<pn>_palette_done_snd = {-1,-1}
+		p1_palette_next_key = '$F', --Ikemen feature
+		p1_palette_previous_key = '$B', --Ikemen feature
+		p1_palette_accept_key = 'a', --Ikemen feature
+		p1_palette_back_key = 'b', --Ikemen feature
+		p1_palette_random_key = 'c', --Ikemen feature
+		p2_palette_next_key = '$F', --Ikemen feature
+		p2_palette_previous_key = '$B', --Ikemen feature
+		p2_palette_accept_key = 'a', --Ikemen feature
+		p2_palette_back_key = 'b', --Ikemen feature
+		p2_palette_random_key = 'c', --Ikemen feature
 	},
 	selectbgdef =
 	{
