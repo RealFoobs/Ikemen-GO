@@ -2542,9 +2542,53 @@ function start.f_teamMenu(side, t)
 end
 
 --;===========================================================
+--; Draw Palette Text
+--;===========================================================
+function start.f_paletteDrawText(side, member)
+	fontInfo = motif.select_info['p' .. side .. '_member' .. member .. '_palette_font']
+	if fontInfo == nil then
+		fontInfo = motif.select_info['p' .. side  .. '_palette_font']
+	end
+	offsetInfo = motif.select_info['p' .. side .. '_member' .. member .. '_palette_offset']
+	if offsetInfo == nil then
+		offsetInfo = motif.select_info['p' .. side  .. '_palette_offset']
+	end
+	sizeInfo = motif.select_info['p' .. side .. '_member' .. member .. '_palette_scale']
+	if sizeInfo == nil then
+		sizeInfo = motif.select_info['p' .. side  .. '_palette_scale']
+	end
+	if (not (fontInfo == nil)) and (not (offsetInfo == nil)) and (not (sizeInfo == nil)) then
+		currentPallete = text:create({
+			font =   fontInfo[1],
+			bank =   fontInfo[2],
+			align =  fontInfo[3],
+			text =   start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal],
+			x =      offsetInfo[1],
+			y =      offsetInfo[2],
+			scaleX = sizeInfo[1],
+			scaleY = sizeInfo[2],
+			r =      fontInfo[4],
+			g =      fontInfo[5],
+			b =      fontInfo[6],
+			height = fontInfo[7],
+		})
+		currentPallete:draw()
+	end
+end
+--;===========================================================
 --; SELECT MENU
 --;===========================================================
 function start.f_selectMenu(side, cmd, player, member, selectState)
+	local t_cmd = {}
+	if main.coop then
+		for i = 1, config.Players do
+			if not gamemode('versuscoop') or (i - 1) % 2 + 1 == side then
+				table.insert(t_cmd, i)
+			end
+		end
+	else
+		t_cmd = {side}
+	end
 	--predefined selection
 	if main.forceChar[side] ~= nil then
 		local t = {}
@@ -2652,14 +2696,65 @@ function start.f_selectMenu(side, cmd, player, member, selectState)
 					end
 					start.p[side].t_selTemp[member].ref = start.c[player].selRef
 					main.f_cmdBufReset(cmd)
-					selectState = 1
+					paletteEnable = motif.select_info.enablepaletteselect
+					if paletteEnable > 0 then
+						palleteCounter = 0
+						for _, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal) do
+							palleteCounter = palleteCounter + 1
+						end
+						if start.p[side].t_selTemp[member].pal > palleteCounter then
+							start.p[side].t_selTemp[member].pal = 1
+						end
+						if palleteCounter > 1 then
+							start.p[side].t_selTemp[member].anim_data = createUniqueAnim(start.p[side].t_selTemp[member].anim_data)
+							start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, start.p[side].t_selTemp[member].pal, start.p[side].t_selTemp[member].pal)
+						end
+						animUpdate(start.p[side].t_selTemp[member].anim_data)
+						selectState = 1
+					else
+						selectState = 3
+					end
 				end
 			end
 		--selection menu
 		elseif selectState == 1 then
 			--TODO: hook left for optional menu that shows up after selecting character (groove, palette selection etc.)
 			--once everything is ready set selectState to 3 to confirm character selection
-			selectState = 3
+			palleteCounter = 0
+			for _, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal) do
+				palleteCounter = palleteCounter + 1
+			end
+			if main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_accept_key'])) then
+				sndPlay(motif.files.snd_data, start.f_getCursorData(player, '_cursor_done_snd')[1], start.f_getCursorData(player, '_cursor_done_snd')[2])
+				start.p[side].t_selTemp[member].pal = start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal]
+				selectState = 3
+			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_next_key'])) then
+				if start.p[side].t_selTemp[member].pal == palleteCounter then
+					start.p[side].t_selTemp[member].pal = 1
+				else
+					start.p[side].t_selTemp[member].pal = start.p[side].t_selTemp[member].pal + 1
+				end
+				if palleteCounter > 1 then
+					start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal])
+				end
+				sndPlay(motif.files.snd_data, start.f_getCursorData(player, '_random_move_snd')[1], start.f_getCursorData(player, '_random_move_snd')[2])
+			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_previous_key'])) then
+				if start.p[side].t_selTemp[member].pal == 1 then
+					start.p[side].t_selTemp[member].pal = palleteCounter
+				else
+					start.p[side].t_selTemp[member].pal = start.p[side].t_selTemp[member].pal - 1
+				end
+				if palleteCounter > 1 then
+					start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal])
+				end
+				sndPlay(motif.files.snd_data, start.f_getCursorData(player, '_random_move_snd')[1], start.f_getCursorData(player, '_random_move_snd')[2])
+			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_random_key'])) then
+				start.p[side].t_selTemp[member].pal = math.random(palleteCounter)
+				start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal])
+			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_back_key'])) then
+				selectState = 0
+			end
+			start.f_paletteDrawText(side, member)
 		--confirm selection
 		elseif selectState == 3 then
 			start.p[side].t_selected[member] = {
