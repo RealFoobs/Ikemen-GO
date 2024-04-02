@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const MaxPalNo = 12
+const MaxPalNo = 99
 const MaxQuotes = 100
 
 type SystemCharFlag uint32
