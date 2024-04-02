@@ -2558,7 +2558,7 @@ func (s *Select) addChar(def string) {
 		LoadFile(&fp, []string{def, "", "data/"}, func(file string) error {
 			var selPal []int32
 			var err error
-			sc.sff, selPal, err = preloadSff(file, true, listSpr)
+			sc.sff, selPal, err = preloadSff(file, true, listSpr, sc.def)
 			if err != nil {
 				panic(fmt.Errorf("failed to load %v: %v\nerror preloading %v", file, err, def))
 			}
@@ -2569,6 +2569,7 @@ func (s *Select) addChar(def string) {
 			if len(sc.pal) == 0 {
 				sc.pal = selPal
 			}
+			sc.pal = selPal
 			return nil
 		})
 	} else {
@@ -2576,6 +2577,24 @@ func (s *Select) addChar(def string) {
 		sc.anims.updateSff(sc.sff)
 		for k := range s.charSpritePreload {
 			sc.anims.addSprite(sc.sff, k[0], k[1])
+		}
+	}
+	//Update the animation with palette information
+	sc.anims[[2]int16{0, -1}].palettedata.palettes = sc.anims[[2]int16{0, -1}].sff.palList.palettes
+	sc.anims[[2]int16{0, -1}].palettedata.paletteMap = sc.anims[[2]int16{0, -1}].sff.palList.paletteMap
+	sc.anims[[2]int16{0, -1}].palettedata.PalTable = sc.anims[[2]int16{0, -1}].sff.palList.PalTable
+	sc.anims[[2]int16{0, -1}].palettedata.PalTex = sc.anims[[2]int16{0, -1}].sff.palList.PalTex
+	value, ok := sc.anims[[2]int16{0, -1}].sff.sprites[[2]int16{sc.anims[[2]int16{0, -1}].frames[0].Group, sc.anims[[2]int16{0, -1}].frames[0].Number}]//This exists to serve the purpose of a try in other languages. If removed characters who have no animation will crash the engine.
+	//Apply palette to preloaded animations, fixes palette issues that occured on some characters
+	if ok {
+		if value.palidx >= 0 {//fuxes an issue discovered on a character that occurs in the scenario that an animation exists but there is no sprite used in the first frame of the animation
+			if sc.anims[[2]int16{0, -1}].palettedata.PalTable[[2]int16{1, 1}] != -1 {//Resolves a crash issue in the event that a character does not have a 1,1 palette
+				if len(sc.pal) > 1 {
+					if sc.anims[[2]int16{0, -1}].sff.header.Ver0 == 1{// 
+						sc.anims[[2]int16{0, -1}].palettedata.paletteMap[sc.anims[[2]int16{0, -1}].sff.sprites[[2]int16{sc.anims[[2]int16{0, -1}].frames[0].Group, sc.anims[[2]int16{0, -1}].frames[0].Number}].palidx] = sc.anims[[2]int16{0, -1}].palettedata.PalTable[[2]int16{1, 1}]
+					}
+				}
+			}
 		}
 	}
 	//read movelist
@@ -2686,7 +2705,7 @@ func (s *Select) AddStage(def string) error {
 		//preload portion of sff file
 		LoadFile(&spr, []string{def, "", "data/"}, func(file string) error {
 			var err error
-			ss.sff, _, err = preloadSff(file, false, listSpr)
+			ss.sff, _, err = preloadSff(file, false, listSpr, ss.def)
 			if err != nil {
 				panic(fmt.Errorf("failed to load %v: %v\nerror preloading %v", file, err, def))
 			}
