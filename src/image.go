@@ -1664,9 +1664,11 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 			}
 			var pal []uint32
 			var idx int
+			duplicatedPalette := false
 			if old, ok := uniquePals[[...]int16{gn_[0], gn_[1]}]; ok {
 				idx = old
 				pal = sff.palList.Get(old)
+				duplicatedPalette = true
 				sys.errLog.Printf("%v duplicated palette: %v,%v (%v/%v)\n", filename, gn_[0], gn_[1], i+1, sff.header.NumberOfPalettes)
 			} else if siz == 0 {
 				idx = int(link)
@@ -1693,6 +1695,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 			if i <= MaxPalNo &&
 				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] == sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] &&
 				gn_[0] != 1 && gn_[1] != int16(i+1) {
+				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] = -1
+			}
+			if duplicatedPalette == true {
 				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] = -1
 			}
 			if i <= MaxPalNo && i+1 == int(sff.header.NumberOfPalettes) {
