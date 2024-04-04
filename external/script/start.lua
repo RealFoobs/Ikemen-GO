@@ -2727,6 +2727,12 @@ function start.f_selectMenu(side, cmd, player, member, selectState)
 			if main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_accept_key'])) then
 				sndPlay(motif.files.snd_data, start.f_getCursorData(player, '_cursor_done_snd')[1], start.f_getCursorData(player, '_cursor_done_snd')[2])
 				start.p[side].t_selTemp[member].pal = start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal]
+				for c, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal_keymap) do
+					if start.p[side].t_selTemp[member].pal == c then
+						start.p[side].t_selTemp[member].pal = v
+						break
+					end
+				end
 				selectState = 3
 			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_next_key'])) then
 				if start.p[side].t_selTemp[member].pal == palleteCounter then
