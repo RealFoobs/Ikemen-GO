@@ -681,6 +681,7 @@ local motif =
 	vs_screen =
 	{
 		orderselect_enabled = 0, --Ikemen feature
+		enablepalettes = 0, --Ikemen feature
 		done_time = 60, --Ikemen feature
 		fadein_time = 15,
 		fadein_col = {0, 0, 0}, --Ikemen feature
