@@ -1694,7 +1694,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 			sff.palList.numcols[[...]int16{gn_[0], gn_[1]}] = int(gn_[2])
 			if i <= MaxPalNo &&
 				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] == sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] &&
-				gn_[0] != 1 && gn_[1] != int16(i+1) {
+				gn_[0] != 1 || gn_[1] != int16(i+1) {
 				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] = -1
 			}
 			if duplicatedPalette == true {
