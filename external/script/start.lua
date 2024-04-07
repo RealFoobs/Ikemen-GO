@@ -2972,8 +2972,10 @@ function start.f_selectVersus(active, t_orderSelect)
 					if done_anim ~= -1 then
 						if start.p[side].t_selTemp[member].anim ~= done_anim then
 							start.p[side].t_selTemp[member].anim_data = start.f_animGet(v.ref, side, member, motif.vs_screen, '', '_done', false) or start.p[side].t_selTemp[member].anim_data
-							start.p[side].t_selTemp[member].anim_data = createUniqueAnim(start.p[side].t_selTemp[member].anim_data)
-							start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, v.pal)
+							if motif.vs_screen.enablepalettes == 1 then
+								start.p[side].t_selTemp[member].anim_data = createUniqueAnim(start.p[side].t_selTemp[member].anim_data)
+								start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, v.pal)
+							end
 						end
 					end
 				end
@@ -2991,10 +2993,12 @@ function start.f_selectVersus(active, t_orderSelect)
 		bgDraw(motif.versusbgdef.bg, false)
 		--draw portraits and order icons
 		for side = 1, 2 do
-			if firstLoop == true then
-				for member, v in ipairs(start.p[side].t_selected) do
-					start.p[side].t_selTemp[member].anim_data = createUniqueAnim(start.p[side].t_selTemp[member].anim_data)
-					start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, v.pal)
+			if motif.vs_screen.enablepalettes == 1 then
+				if firstLoop == true then
+					for member, v in ipairs(start.p[side].t_selected) do
+						start.p[side].t_selTemp[member].anim_data = createUniqueAnim(start.p[side].t_selTemp[member].anim_data)
+						start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, v.pal)
+					end
 				end
 			end
 			start.f_drawPortraits(main.f_remapTable(start.p[side].t_selTemp, start.t_orderRemap[side]), side, motif.vs_screen, '', false, t_icon[side])
