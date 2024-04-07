@@ -772,6 +772,7 @@ func systemScriptInit(l *lua.LState) {
 		newAnim.anim.current = oldPreanim.anim.current
 		newAnim.anim.sumtime = oldPreanim.anim.sumtime
 		newAnim.anim.frames = oldPreanim.anim.frames
+		newAnim.anim.interpolate_blend_srcalpha = oldPreanim.anim.interpolate_blend_srcalpha
 		newAnim.anim.interpolate_scale = oldPreanim.anim.interpolate_scale
 		l.Push(newUserData(l, newAnim))
 		return 1
