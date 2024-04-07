@@ -1791,7 +1791,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 		}
 	} else {
 		for palTableNumber := range sff.palList.PalTable {
-			if palTableNumber[0] == 1 && sff.palList.PalTable[palTableNumber] != -1{
+			if palTableNumber[0] == 1 && sff.palList.PalTable[palTableNumber] != -1  && sff.palList.PalTable[palTableNumber] < MaxPalNo{
 				selPal = append(selPal, int32(palTableNumber[1]))
 			}
 		}
