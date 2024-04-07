@@ -2696,12 +2696,24 @@ function start.f_selectMenu(side, cmd, player, member, selectState)
 					end
 					start.p[side].t_selTemp[member].ref = start.c[player].selRef
 					main.f_cmdBufReset(cmd)
-					paletteEnable = motif.select_info.enablepaletteselect
-					if paletteEnable > 0 then
-						palleteCounter = 0
-						for _, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal) do
-							palleteCounter = palleteCounter + 1
+					
+					palleteCounter = 0
+					for _, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal) do
+						palleteCounter = palleteCounter + 1
+					end
+					
+					if motif.select_info.paletteselect == 2 then
+						for c, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal_keymap) do
+							if start.p[side].t_selTemp[member].pal == v then
+								start.p[side].t_selTemp[member].pal = c
+								break
+							end
 						end
+					elseif motif.select_info.paletteselect == 3 then
+						start.p[side].t_selTemp[member].pal = 1
+					end
+					
+					if motif.select_info.paletteselect >= 1 then
 						if start.p[side].t_selTemp[member].pal > palleteCounter then
 							start.p[side].t_selTemp[member].pal = 1
 						end
