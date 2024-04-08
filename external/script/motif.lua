@@ -672,6 +672,9 @@ local motif =
 		p2_palette_accept_key = 'a', --Ikemen feature
 		p2_palette_back_key = 'b', --Ikemen feature
 		p2_palette_random_key = 'c', --Ikemen feature
+		palette_move_snd = {-1, 0},
+		palette_done_snd = {-1, 0},
+		palette_back_snd = {-1, 0},
 	},
 	selectbgdef =
 	{
