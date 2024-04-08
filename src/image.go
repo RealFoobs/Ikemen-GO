@@ -1644,6 +1644,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 	sff.header.NumberOfSprites = h.NumberOfSprites
 	sff.header.NumberOfPalettes = h.NumberOfPalettes
 	if sff.header.Ver0 != 1 {
+		for palTableNumber := range sff.palList.PalTable {
+			sff.palList.PalTable[palTableNumber] = -1
+		}
 		uniquePals := make(map[[2]int16]int)
 		for i := 0; i < int(sff.header.NumberOfPalettes); i++ {
 			f.Seek(int64(sff.header.FirstPaletteHeaderOffset)+int64(i*16), 0)
@@ -1664,11 +1667,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 			}
 			var pal []uint32
 			var idx int
-			duplicatedPalette := false
 			if old, ok := uniquePals[[...]int16{gn_[0], gn_[1]}]; ok {
 				idx = old
 				pal = sff.palList.Get(old)
-				duplicatedPalette = true
 				sys.errLog.Printf("%v duplicated palette: %v,%v (%v/%v)\n", filename, gn_[0], gn_[1], i+1, sff.header.NumberOfPalettes)
 			} else if siz == 0 {
 				idx = int(link)
@@ -1690,21 +1691,10 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 			}
 			uniquePals[[...]int16{gn_[0], gn_[1]}] = idx
 			sff.palList.SetSource(i, pal)
-			sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] = idx
+			if gn_[0] == 1 && gn_[1] > 0 && gn_[1] <= MaxPalNo {
+				sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] = idx
+			}
 			sff.palList.numcols[[...]int16{gn_[0], gn_[1]}] = int(gn_[2])
-			if i <= MaxPalNo &&
-				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] == sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] &&
-				gn_[0] != 1 || gn_[1] != int16(i+1) {
-				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] = -1
-			}
-			if duplicatedPalette == true {
-				sff.palList.PalTable[[...]int16{1, int16(i + 1)}] = -1
-			}
-			if i <= MaxPalNo && i+1 == int(sff.header.NumberOfPalettes) {
-				for j := i + 1; j < MaxPalNo; j++ {
-					delete(sff.palList.PalTable, [...]int16{1, int16(j + 1)}) //余計なパレットを削除 / Remove extra palette
-				}
-			}
 		}
 	}
 	
@@ -1791,7 +1781,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 		}
 	} else {
 		for palTableNumber := range sff.palList.PalTable {
-			if palTableNumber[0] == 1 && sff.palList.PalTable[palTableNumber] != -1  && sff.palList.PalTable[palTableNumber] < MaxPalNo{
+			if palTableNumber[0] == 1 && sff.palList.PalTable[palTableNumber] != -1  && palTableNumber[1] < MaxPalNo{
 				selPal = append(selPal, int32(palTableNumber[1]))
 			}
 		}
