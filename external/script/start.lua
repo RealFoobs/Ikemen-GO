@@ -2574,6 +2574,21 @@ function start.f_paletteDrawText(side, member)
 		})
 		currentPallete:draw()
 	end
+	currentPallete = text:create({
+		font =   motif.select_info['p' .. side  .. '_palette_text_font'][1],
+		bank =   motif.select_info['p' .. side  .. '_palette_text_font'][2],
+		align =  motif.select_info['p' .. side  .. '_palette_text_font'][3],
+		text =   motif.select_info['p' .. side  .. '_palette_text_text'],
+		x =      motif.select_info['p' .. side  .. '_palette_text_offset'][1],
+		y =      motif.select_info['p' .. side  .. '_palette_text_offset'][2],
+		scaleX = motif.select_info['p' .. side  .. '_palette_text_scale'][1],
+		scaleY = motif.select_info['p' .. side  .. '_palette_text_scale'][2],
+		r =      motif.select_info['p' .. side  .. '_palette_text_font'][4],
+		g =      motif.select_info['p' .. side  .. '_palette_text_font'][5],
+		b =      motif.select_info['p' .. side  .. '_palette_text_font'][6],
+		height = motif.select_info['p' .. side  .. '_palette_text_font'][7],
+	})
+	currentPallete:draw()
 end
 --;===========================================================
 --; SELECT MENU
