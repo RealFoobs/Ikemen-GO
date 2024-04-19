@@ -349,6 +349,7 @@ var triggerMap = map[string]int{
 	"firstattack":        1,
 	"float":              1,
 	"framespercount":     1,
+	"gamefps":            1,
 	"gamemode":           1,
 	"getplayerid":        1,
 	"groundangle":        1,
@@ -1900,8 +1901,8 @@ func (c *Compiler) expValue(out *BytecodeExp, in *string,
 				out.append(OC_ex_gethitvar_airguard_velocity_x)
 			case "airguard.velocity.y":
 				out.append(OC_ex_gethitvar_airguard_velocity_y)
-			case "contact":
-				out.append(OC_ex_gethitvar_contact)
+			case "frame":
+				out.append(OC_ex_gethitvar_frame)
 			default:
 				return bvNone(), Error("Invalid data: " + c.token)
 			}
@@ -2874,6 +2875,8 @@ func (c *Compiler) expValue(out *BytecodeExp, in *string,
 		out.append(OC_ex_, OC_ex_firstattack)
 	case "framespercount":
 		out.append(OC_ex_, OC_ex_framespercount)
+	case "gamefps":
+		out.append(OC_ex_, OC_ex_gamefps)
 	case "gamemode":
 		if err := nameSubEx(OC_ex_gamemode); err != nil {
 			return bvNone(), err
@@ -2907,8 +2910,8 @@ func (c *Compiler) expValue(out *BytecodeExp, in *string,
 		switch c.token {
 		case "cornerpush":
 			out.append(OC_ex_movehitvar_cornerpush)
-		case "contact":
-			out.append(OC_ex_movehitvar_contact)
+		case "frame":
+			out.append(OC_ex_movehitvar_frame)
 		case "id":
 			out.append(OC_ex_movehitvar_id)
 		case "overridden":

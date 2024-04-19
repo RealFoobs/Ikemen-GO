@@ -3346,8 +3346,8 @@ func triggerFunctions(l *lua.LState) {
 			ln = lua.LNumber(c.ghv.airguard_velocity[0])
 		case "airguard.velocity.y":
 			ln = lua.LNumber(c.ghv.airguard_velocity[1])
-		case "contact":
-			ln = lua.LNumber(Btoi(c.ghv.contact))
+		case "frame":
+			ln = lua.LNumber(Btoi(c.ghv.frame))
 		default:
 			l.RaiseError("\nInvalid argument: %v\n", strArg(l, 1))
 		}
@@ -3501,10 +3501,10 @@ func triggerFunctions(l *lua.LState) {
 		c := sys.debugWC
 		var ln lua.LNumber
 		switch strArg(l, 1) {
-		case "contact":
-			ln = lua.LNumber(Btoi(c.mhv.contact))
 		case "cornerpush":
 			ln = lua.LNumber(c.mhv.cornerpush)
+		case "frame":
+			ln = lua.LNumber(Btoi(c.mhv.frame))
 		case "id":
 			ln = lua.LNumber(c.mhv.id)
 		case "overridden":
@@ -4232,6 +4232,10 @@ func triggerFunctions(l *lua.LState) {
 	})
 	luaRegister(l, "framespercount", func(l *lua.LState) int {
 		l.Push(lua.LNumber(sys.lifebar.ti.framespercount))
+		return 1
+	})
+	luaRegister(l, "gamefps", func(*lua.LState) int {
+		l.Push(lua.LNumber(sys.gameFPS))
 		return 1
 	})
 	luaRegister(l, "gamemode", func(*lua.LState) int {
