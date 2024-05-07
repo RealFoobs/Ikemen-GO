@@ -1789,14 +1789,12 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 	slices.Sort(selPal)
 	
 	for sprNumber := range sff.sprites {
-		if h.Ver0 == 2{
+		if sprNumber[0] != 9000 {
 			if len(selPal) > 1 {
 				sff.sprites[sprNumber].Pal = nil
 			}
-		} else {
-			if len(selPal) > 1 && sprNumber[0] != 9000{
+			if h.Ver0 == 2 {
 				sff.sprites[sprNumber].palidx = 0
-				sff.sprites[sprNumber].Pal = nil
 			}
 		}
 	}
