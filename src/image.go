@@ -1793,7 +1793,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, defFil
 			if len(selPal) > 1 {
 				sff.sprites[sprNumber].Pal = nil
 			}
-			if h.Ver0 == 2 {
+			if h.Ver0 == 1 {
 				sff.sprites[sprNumber].palidx = 0
 			}
 		}
