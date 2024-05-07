@@ -2753,7 +2753,7 @@ function start.f_selectMenu(side, cmd, player, member, selectState)
 			for _, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal) do
 				palleteCounter = palleteCounter + 1
 			end
-			if main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_accept_key'])) then
+			if main.f_input({cmd}, {motif.select_info['p' .. side .. '_palette_accept_key']})then 
 				sndPlay(motif.files.snd_data, motif.select_info.palette_done_snd[1], motif.select_info.palette_done_snd[2])
 				start.p[side].t_selTemp[member].pal = start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal]
 				for c, v in ipairs(start.f_getCharData(start.p[side].t_selTemp[member].ref).pal_keymap) do
@@ -2763,7 +2763,7 @@ function start.f_selectMenu(side, cmd, player, member, selectState)
 					end
 				end
 				selectState = 3
-			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_next_key'])) then
+			elseif main.f_input({cmd}, {motif.select_info['p' .. side .. '_palette_next_key']})then 
 				if start.p[side].t_selTemp[member].pal == palleteCounter then
 					start.p[side].t_selTemp[member].pal = 1
 				else
@@ -2773,7 +2773,7 @@ function start.f_selectMenu(side, cmd, player, member, selectState)
 					start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal])
 				end
 				sndPlay(motif.files.snd_data, motif.select_info.palette_move_snd[1], motif.select_info.palette_move_snd[2])
-			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_previous_key'])) then
+			elseif main.f_input({cmd}, {motif.select_info['p' .. side .. '_palette_previous_key']})then 
 				if start.p[side].t_selTemp[member].pal == 1 then
 					start.p[side].t_selTemp[member].pal = palleteCounter
 				else
@@ -2783,13 +2783,13 @@ function start.f_selectMenu(side, cmd, player, member, selectState)
 					start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal])
 				end
 				sndPlay(motif.files.snd_data, motif.select_info.palette_move_snd[1], motif.select_info.palette_move_snd[2])
-			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_random_key'])) then
+			elseif main.f_input({cmd}, {motif.select_info['p' .. side .. '_palette_random_key']})then
 				start.p[side].t_selTemp[member].pal = math.random(palleteCounter)
 				if palleteCounter > 1 and (motif.select_info.p1_face_anim >= 0 or motif.select_info['p' .. side .. '_member' .. member .. '_face_anim'] ~= nil) then
 					start.p[side].t_selTemp[member].anim_data = changeColorPalette(start.p[side].t_selTemp[member].anim_data, start.f_getCharData(start.p[side].t_selTemp[member].ref).pal[start.p[side].t_selTemp[member].pal])
 				end
 				sndPlay(motif.files.snd_data, motif.select_info.palette_move_snd[1], motif.select_info.palette_move_snd[2])
-			elseif main.f_input(t_cmd, main.f_extractKeys(motif.select_info['p' .. side .. '_palette_back_key'])) then
+			elseif main.f_input({cmd}, {motif.select_info['p' .. side .. '_palette_back_key']})then
 				sndPlay(motif.files.snd_data, motif.select_info.palette_back_snd[1], motif.select_info.palette_back_snd[2])
 				selectState = 0
 			end
