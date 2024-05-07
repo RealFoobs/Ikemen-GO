@@ -523,6 +523,20 @@ const (
 	OC_ex_helperindexexist
 	OC_ex_helpername
 	OC_ex_hitoverridden
+	OC_ex_inputtime_B
+	OC_ex_inputtime_D
+	OC_ex_inputtime_F
+	OC_ex_inputtime_U
+	OC_ex_inputtime_a
+	OC_ex_inputtime_b
+	OC_ex_inputtime_c
+	OC_ex_inputtime_x
+	OC_ex_inputtime_y
+	OC_ex_inputtime_z
+	OC_ex_inputtime_s
+	OC_ex_inputtime_d
+	OC_ex_inputtime_w
+	OC_ex_inputtime_m
 	OC_ex_movehitvar_frame
 	OC_ex_movehitvar_cornerpush
 	OC_ex_movehitvar_id
@@ -2236,6 +2250,90 @@ func (be BytecodeExp) run_ex(c *Char, i *int, oc *Char) {
 		sys.bcStack.PushI(c.anim.totaltime)
 	case OC_ex_attack:
 		sys.bcStack.PushF(c.attackMul * 100)
+	case OC_ex_inputtime_B:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.Bb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_D:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.Db)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_F:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.Fb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_U:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.Ub)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_a:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.ab)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_b:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.bb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_c:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.cb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_x:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.xb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_y:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.yb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_z:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.zb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_s:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.sb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_d:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.db)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_w:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.wb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_m:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.mb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
 	case OC_ex_combocount:
 		sys.bcStack.PushI(c.comboCount())
 	case OC_ex_consecutivewins:
@@ -3053,6 +3151,7 @@ const (
 	changeState_value byte = iota
 	changeState_ctrl
 	changeState_anim
+	changeState_continue
 	changeState_readplayerid
 	changeState_redirectid
 )
@@ -3061,7 +3160,7 @@ func (sc changeState) Run(c *Char, _ []int32) bool {
 	crun := c
 	var v, a, ctrl int32 = -1, -1, -1
 	ffx := ""
-	changeState := true
+	stop := true
 	StateControllerBase(sc).run(c, func(id byte, exp []BytecodeExp) bool {
 		switch id {
 		case changeState_value:
@@ -3073,16 +3172,18 @@ func (sc changeState) Run(c *Char, _ []int32) bool {
 			ffx = string(*(*[]byte)(unsafe.Pointer(&exp[0])))
 		case changeState_redirectid:
 			if rid := sys.playerID(exp[0].evalI(c)); rid != nil {
-				changeState = rid.id == c.id
+				stop = false
 				crun = rid
 			} else {
 				return false
 			}
+		case changeState_continue:
+			stop = !exp[0].evalB(c)
 		}
 		return true
 	})
 	crun.changeState(v, a, ctrl, ffx)
-	return changeState
+	return stop
 }
 
 type selfState changeState
@@ -3091,7 +3192,7 @@ func (sc selfState) Run(c *Char, _ []int32) bool {
 	crun := c
 	var v, a, r, ctrl int32 = -1, -1, -1, -1
 	ffx := ""
-	changeState := true
+	stop := true
 	StateControllerBase(sc).run(c, func(id byte, exp []BytecodeExp) bool {
 		switch id {
 		case changeState_value:
@@ -3109,16 +3210,18 @@ func (sc selfState) Run(c *Char, _ []int32) bool {
 			}
 		case changeState_redirectid:
 			if rid := sys.playerID(exp[0].evalI(c)); rid != nil {
-				changeState = rid.id == c.id
+				stop = false
 				crun = rid
 			} else {
 				return false
 			}
+		case changeState_continue:
+			stop = !exp[0].evalB(c)
 		}
 		return true
 	})
 	crun.selfState(v, a, r, ctrl, ffx)
-	return changeState
+	return stop
 }
 
 type tagIn StateControllerBase
@@ -8577,6 +8680,68 @@ func (sc modifyBGCtrl) Run(c *Char, _ []int32) bool {
 	return false
 }
 
+type modifyBgm StateControllerBase
+
+const (
+	modifyBgm_volume = iota
+	modifyBgm_loopstart
+	modifyBgm_loopend
+	modifyBgm_position
+	modifyBgm_freqmul
+	modifyBgm_redirectid
+)
+
+func (sc modifyBgm) Run(c *Char, _ []int32) bool {
+	var volumeSet, loopStartSet, loopEndSet, posSet, freqSet = false, false, false, false, false
+	var volume, loopstart, loopend, position int = 100, 0, 0, 0
+	var freqmul float32 = 1.0
+	StateControllerBase(sc).run(c, func(id byte, exp []BytecodeExp) bool {
+		switch id {
+		case modifyBgm_volume:
+			volume = int(exp[0].evalI(c))
+			volumeSet = true
+		case modifyBgm_loopstart:
+			loopstart = int(exp[0].evalI(c))
+			loopStartSet = true
+		case modifyBgm_loopend:
+			loopend = int(exp[0].evalI(c))
+			loopEndSet = true
+		case modifyBgm_position:
+			position = int(exp[0].evalI(c))
+			posSet = true
+		case modifyBgm_freqmul:
+			freqmul = float32(exp[0].evalF(c))
+			freqSet = true
+		case modifyBgm_redirectid:
+			if rid := sys.playerID(exp[0].evalI(c)); rid != nil {
+
+			} else {
+				return false
+			}
+		}
+		return true
+	})
+	if sys.bgm.ctrl != nil {
+		// Set values that are different only
+		if volumeSet {
+			volumeScaled := int(float64(volume) / 100.0 * float64(sys.maxBgmVolume))
+			sys.bgm.bgmVolume = int(Min(int32(volumeScaled), int32(sys.maxBgmVolume)))
+			sys.bgm.UpdateVolume()
+		}
+		if posSet {
+			sys.bgm.Seek(position)
+		}
+		if (loopStartSet && sys.bgm.bgmLoopStart != loopstart) || (loopEndSet && sys.bgm.bgmLoopEnd != loopend) {
+			sys.bgm.SetLoopPoints(loopstart, loopend)
+		}
+		if freqSet && sys.bgm.freqmul != freqmul {
+			sys.bgm.SetFreqMul(freqmul)
+		}
+		return true
+	}
+	return false
+}
+
 type modifySnd StateControllerBase
 
 const (
@@ -8694,6 +8859,7 @@ const (
 	playBgm_loopstart
 	playBgm_loopend
 	playBgm_startposition
+	playBgm_freqmul
 	playBgm_redirectid
 )
 
@@ -8702,6 +8868,7 @@ func (sc playBgm) Run(c *Char, _ []int32) bool {
 	var b bool
 	var bgm string
 	var loop, volume, loopstart, loopend, startposition int = 1, 100, 0, 0, 0
+	var freqmul float32 = 1.0
 	StateControllerBase(sc).run(c, func(id byte, exp []BytecodeExp) bool {
 		switch id {
 		case playBgm_bgm:
@@ -8723,6 +8890,8 @@ func (sc playBgm) Run(c *Char, _ []int32) bool {
 			loopend = int(exp[0].evalI(c))
 		case playBgm_startposition:
 			startposition = int(exp[0].evalI(c))
+		case playBgm_freqmul:
+			freqmul = exp[0].evalF(c)
 		case playBgm_redirectid:
 			if rid := sys.playerID(exp[0].evalI(c)); rid != nil {
 				crun = rid
@@ -8733,7 +8902,7 @@ func (sc playBgm) Run(c *Char, _ []int32) bool {
 		return true
 	})
 	if b {
-		sys.bgm.Open(bgm, loop, volume, loopstart, loopend, startposition)
+		sys.bgm.Open(bgm, loop, volume, loopstart, loopend, startposition, freqmul)
 		sys.playBgmFlg = true
 	}
 	return false
