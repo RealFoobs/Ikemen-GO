@@ -2315,6 +2315,7 @@ type SelectChar struct {
 	pal            []int32
 	pal_defaults   []int32
 	pal_keymap     []int32
+	palfiles	   []string
 	localcoord     int32
 	portrait_scale float32
 	cns_scale      [2]float32
@@ -2491,6 +2492,7 @@ func (s *Select) addChar(def string) {
 				for i := 1; i <= MaxPalNo; i++ {
 					if is[fmt.Sprintf("pal%v", i)] != "" {
 						sc.pal = append(sc.pal, int32(i))
+						sc.palfiles = append(sc.palfiles, is[fmt.Sprintf("pal%v", i)])
 					}
 				}
 				movelist = is["movelist"]
@@ -2575,7 +2577,7 @@ func (s *Select) addChar(def string) {
 		LoadFile(&fp, []string{def, "", "data/"}, func(file string) error {
 			var selPal []int32
 			var err error
-			sc.sff, selPal, err = preloadSff(file, true, listSpr, sc.def)
+			sc.sff, selPal, err = preloadSff(file, true, listSpr, s.charSpritePreload, sc.palfiles, sc.pal)
 			if err != nil {
 				panic(fmt.Errorf("failed to load %v: %v\nerror preloading %v", file, err, def))
 			}
@@ -2724,7 +2726,7 @@ func (s *Select) AddStage(def string) error {
 		//preload portion of sff file
 		LoadFile(&spr, []string{def, "", "data/"}, func(file string) error {
 			var err error
-			ss.sff, _, err = preloadSff(file, false, listSpr, ss.def)
+			ss.sff, _, err = preloadSff(file, false, listSpr, nil, nil, nil)
 			if err != nil {
 				panic(fmt.Errorf("failed to load %v: %v\nerror preloading %v", file, err, def))
 			}
