@@ -354,10 +354,15 @@ const (
 	OC_const_stagevar_camera_tensionhigh
 	OC_const_stagevar_camera_tensionlow
 	OC_const_stagevar_camera_tension
+	OC_const_stagevar_camera_tensionvel
+	OC_const_stagevar_camera_cuthigh
+	OC_const_stagevar_camera_cutlow
 	OC_const_stagevar_camera_startzoom
 	OC_const_stagevar_camera_zoomout
 	OC_const_stagevar_camera_zoomin
+	OC_const_stagevar_camera_zoomindelay
 	OC_const_stagevar_camera_ytension_enable
+	OC_const_stagevar_camera_autocenter
 	OC_const_stagevar_playerinfo_leftbound
 	OC_const_stagevar_playerinfo_rightbound
 	OC_const_stagevar_scaling_topscale
@@ -527,6 +532,8 @@ const (
 	OC_ex_inputtime_D
 	OC_ex_inputtime_F
 	OC_ex_inputtime_U
+	OC_ex_inputtime_L
+	OC_ex_inputtime_R
 	OC_ex_inputtime_a
 	OC_ex_inputtime_b
 	OC_ex_inputtime_c
@@ -2271,6 +2278,18 @@ func (be BytecodeExp) run_ex(c *Char, i *int, oc *Char) {
 	case OC_ex_inputtime_U:
 		if c.keyctrl[0] && c.cmd != nil {
 			sys.bcStack.PushI(c.cmd[0].Buffer.Ub)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_L:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.Lb)
+		} else {
+			sys.bcStack.PushI(0)
+		}
+	case OC_ex_inputtime_R:
+		if c.keyctrl[0] && c.cmd != nil {
+			sys.bcStack.PushI(c.cmd[0].Buffer.Rb)
 		} else {
 			sys.bcStack.PushI(0)
 		}
@@ -9273,10 +9292,15 @@ const (
 	modifyStageVar_camera_tensionhigh
 	modifyStageVar_camera_tensionlow
 	modifyStageVar_camera_tension
+	modifyStageVar_camera_tensionvel
+	modifyStageVar_camera_cuthigh
+	modifyStageVar_camera_cutlow
 	modifyStageVar_camera_startzoom
 	modifyStageVar_camera_zoomout
 	modifyStageVar_camera_zoomin
+	modifyStageVar_camera_zoomindelay
 	modifyStageVar_camera_ytension_enable
+	modifyStageVar_camera_autocenter
 	modifyStageVar_playerinfo_leftbound
 	modifyStageVar_playerinfo_rightbound
 	modifyStageVar_scaling_topscale
@@ -9300,6 +9324,8 @@ func (sc modifyStageVar) Run(c *Char, _ []int32) bool {
 	s := *&sys.stage
 	StateControllerBase(sc).run(c, func(id byte, exp []BytecodeExp) bool {
 		switch id {
+		case modifyStageVar_camera_autocenter:
+			s.stageCamera.autocenter = exp[0].evalB(c)
 		case modifyStageVar_camera_boundleft:
 			s.stageCamera.boundleft = exp[0].evalI(c)
 		case modifyStageVar_camera_boundright:
@@ -9318,12 +9344,20 @@ func (sc modifyStageVar) Run(c *Char, _ []int32) bool {
 			s.stageCamera.tensionlow = exp[0].evalI(c)
 		case modifyStageVar_camera_tension:
 			s.stageCamera.tension = exp[0].evalI(c)
+		case modifyStageVar_camera_tensionvel:
+			s.stageCamera.tensionvel = exp[0].evalF(c)
+		case modifyStageVar_camera_cuthigh:
+			s.stageCamera.cuthigh = exp[0].evalI(c)
+		case modifyStageVar_camera_cutlow:
+			s.stageCamera.cutlow = exp[0].evalI(c)
 		case modifyStageVar_camera_startzoom:
 			s.stageCamera.startzoom = exp[0].evalF(c)
 		case modifyStageVar_camera_zoomout:
 			s.stageCamera.zoomout = exp[0].evalF(c)
 		case modifyStageVar_camera_zoomin:
 			s.stageCamera.zoomin = exp[0].evalF(c)
+		case modifyStageVar_camera_zoomindelay:
+			s.stageCamera.zoomindelay = exp[0].evalF(c)
 		case modifyStageVar_camera_ytension_enable:
 			s.stageCamera.ytensionenable = exp[0].evalB(c)
 		case modifyStageVar_playerinfo_leftbound:
