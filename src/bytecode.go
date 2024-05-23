@@ -4251,16 +4251,12 @@ func (sc explod) Run(c *Char, _ []int32) bool {
 				}
 			}
 		case explod_animelem:
-			if c.stWgi().ikemenver[0] != 0 || c.stWgi().ikemenver[1] != 0 {
-				animelem := exp[0].evalI(c)
-				e.animelem = animelem
-				e.anim.Action()
-				e.setAnimElem()
-			}
+			animelem := exp[0].evalI(c)
+			e.animelem = animelem
+			e.anim.Action()
+			e.setAnimElem()
 		case explod_animfreeze:
-			if c.stWgi().ikemenver[0] != 0 || c.stWgi().ikemenver[1] != 0 {
-				e.animfreeze = exp[0].evalB(c)
-			}
+			e.animfreeze = exp[0].evalB(c)
 		case explod_angle:
 			e.anglerot[0] = exp[0].evalF(c)
 		case explod_yangle:
@@ -4287,9 +4283,7 @@ func (sc explod) Run(c *Char, _ []int32) bool {
 			}
 			palFX(sc).runSub(c, &e.palfxdef, id, exp)
 
-			if c.stWgi().ikemenver[0] != 0 || c.stWgi().ikemenver[1] != 0 {
-				explod(sc).setInterpolation(c, e, id, exp, &e.palfxdef)
-			}
+			explod(sc).setInterpolation(c, e, id, exp, &e.palfxdef)
 
 		}
 		return true
@@ -4525,12 +4519,22 @@ func (sc modifyExplod) Run(c *Char, _ []int32) bool {
 				t := exp[0].evalI(c)
 				eachExpl(func(e *Explod) {
 					e.bindtime = t
+					//Bindtime fix(update bindtime according to current explod time)
+					if (crun.stWgi().ikemenver[0] > 0 || crun.stWgi().ikemenver[1] > 0) && t > 0 {
+						e.bindtime = e.time + t
+					}
 					e.setX(e.pos[0])
 					e.setY(e.pos[1])
 				})
 			case explod_removetime:
 				t := exp[0].evalI(c)
-				eachExpl(func(e *Explod) { e.removetime = t })
+				eachExpl(func(e *Explod) {
+					e.removetime = t
+					//Removetime fix(update removetime according to current explod time)
+					if (crun.stWgi().ikemenver[0] > 0 || crun.stWgi().ikemenver[1] > 0) && t > 0 {
+						e.removetime = e.time + t
+					}
+				})
 			case explod_supermove:
 				if exp[0].evalB(c) {
 					eachExpl(func(e *Explod) { e.supermovetime = -1 })
@@ -4539,10 +4543,22 @@ func (sc modifyExplod) Run(c *Char, _ []int32) bool {
 				}
 			case explod_supermovetime:
 				t := exp[0].evalI(c)
-				eachExpl(func(e *Explod) { e.supermovetime = t })
+				eachExpl(func(e *Explod) {
+					e.supermovetime = t
+					//Supermovetime fix(update supermovetime according to current explod time)
+					if (crun.stWgi().ikemenver[0] > 0 || crun.stWgi().ikemenver[1] > 0) && t > 0 {
+						e.supermovetime = e.time + t
+					}
+				})
 			case explod_pausemovetime:
 				t := exp[0].evalI(c)
-				eachExpl(func(e *Explod) { e.pausemovetime = t })
+				eachExpl(func(e *Explod) {
+					e.pausemovetime = t
+					//Pausemovetime fix(update pausemovetime according to current explod time)
+					if (crun.stWgi().ikemenver[0] > 0 || crun.stWgi().ikemenver[1] > 0) && t > 0 {
+						e.pausemovetime = e.time + t
+					}
+				})
 			case explod_sprpriority:
 				t := exp[0].evalI(c)
 				eachExpl(func(e *Explod) { e.sprpriority = t })
@@ -4618,20 +4634,16 @@ func (sc modifyExplod) Run(c *Char, _ []int32) bool {
 					eachExpl(func(e *Explod) { e.anim = anim })
 				}
 			case explod_animelem:
-				if c.stWgi().ikemenver[0] != 0 || c.stWgi().ikemenver[1] != 0 {
-					animelem := exp[0].evalI(c)
-					eachExpl(func(e *Explod) {
-						e.interpolate_animelem[1] = -1
-						e.animelem = animelem
-						e.anim.Action()
-						e.setAnimElem()
-					})
-				}
+				animelem := exp[0].evalI(c)
+				eachExpl(func(e *Explod) {
+					e.interpolate_animelem[1] = -1
+					e.animelem = animelem
+					e.anim.Action()
+					e.setAnimElem()
+				})
 			case explod_animfreeze:
-				if c.stWgi().ikemenver[0] != 0 || c.stWgi().ikemenver[1] != 0 {
-					animfreeze := exp[0].evalB(c)
-					eachExpl(func(e *Explod) { e.animfreeze = animfreeze })
-				}
+				animfreeze := exp[0].evalB(c)
+				eachExpl(func(e *Explod) { e.animfreeze = animfreeze })
 			case explod_angle:
 				a := exp[0].evalF(c)
 				eachExpl(func(e *Explod) { e.anglerot[0] = a })
@@ -4664,7 +4676,7 @@ func (sc modifyExplod) Run(c *Char, _ []int32) bool {
 				if c.stWgi().ikemenver[0] != 0 || c.stWgi().ikemenver[1] != 0 {
 					interpolation := exp[0].evalB(c)
 					eachExpl(func(e *Explod) {
-						if e.interpolate != interpolation {
+						if e.interpolate != interpolation && e.interpolate_time[0] > 0 {
 							e.interpolate_animelem[0] = e.start_animelem
 							e.interpolate_animelem[1] = e.interpolate_animelem[2]
 							if e.ownpal {
