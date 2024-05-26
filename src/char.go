@@ -500,6 +500,7 @@ const (
 	HT_Unknown HitType = -1
 )
 
+// Aiuchi = trading hits
 type AiuchiType int32
 
 const (
@@ -1938,60 +1939,63 @@ type CharSystemVar struct {
 }
 
 type Char struct {
-	name            string
-	palfx           *PalFX
-	anim            *Animation
-	curFrame        *AnimFrame
-	cmd             []CommandList
-	ss              StateState
-	key             int
-	id              int32
-	helperId        int32
-	helperIndex     int32
-	parentIndex     int32
-	playerNo        int
-	teamside        int
-	keyctrl         [4]bool
-	player          bool
-	animPN          int
-	animNo          int32
-	prevAnimNo      int32
-	life            int32
-	lifeMax         int32
-	power           int32
-	powerMax        int32
-	dizzyPoints     int32
-	dizzyPointsMax  int32
-	guardPoints     int32
-	guardPointsMax  int32
-	redLife         int32
-	juggle          int32
-	fallTime        int32
-	localcoord      float32
-	localscl        float32
-	size            CharSize
-	clsnScale       [2]float32
-	hitdef          HitDef
-	ghv             GetHitVar
-	mhv             MoveHitVar
-	hitby           [2]HitBy
-	ho              [8]HitOverride
-	hoIdx           int
-	hoKeepState     bool
-	mctype          MoveContact
-	mctime          int32
-	children        []*Char
-	targets         []int32
-	targetsOfHitdef []int32
-	enemynear       [2][]*Char
-	p2enemy         []*Char
-	pos             [3]float32
-	drawPos         [3]float32
-	oldPos          [3]float32
-	vel             [3]float32
-	facing          float32
-	ivar            [NumVar + NumSysVar]int32
-	fvar            [NumFvar + NumSysFvar]float32
+	name                string
+	palfx               *PalFX
+	anim                *Animation
+	curFrame            *AnimFrame
+	cmd                 []CommandList
+	ss                  StateState
+	key                 int
+	id                  int32
+	index               int32
+	runorder            int32
+	helperId            int32
+	helperIndex         int32
+	parentIndex         int32
+	playerNo            int
+	teamside            int
+	keyctrl             [4]bool
+	player              bool
+	animPN              int
+	animNo              int32
+	prevAnimNo          int32
+	life                int32
+	lifeMax             int32
+	power               int32
+	powerMax            int32
+	dizzyPoints         int32
+	dizzyPointsMax      int32
+	guardPoints         int32
+	guardPointsMax      int32
+	redLife             int32
+	juggle              int32
+	fallTime            int32
+	localcoord          float32
+	localscl            float32
+	size                CharSize
+	clsnScale           [2]float32
+	hitdef              HitDef
+	ghv                 GetHitVar
+	mhv                 MoveHitVar
+	hitby               [2]HitBy
+	ho                  [8]HitOverride
+	hoIdx               int
+	hoKeepState         bool
+	mctype              MoveContact
+	mctime              int32
+	children            []*Char
+	targets             []int32
+	hitdefTargets       []int32
+	hitdefTargetsBuffer []int32
+	enemynear           [2][]*Char
+	p2enemy             []*Char
+	pos                 [3]float32
+	drawPos             [3]float32
+	oldPos              [3]float32
+	vel                 [3]float32
+	facing              float32
+	ivar                [NumVar + NumSysVar]int32
+	fvar                [NumFvar + NumSysFvar]float32
 	CharSystemVar
 	aimg            AfterImage
 	soundChannels   SoundChannels
@@ -2105,6 +2109,8 @@ func (c *Char) clear1() {
 	c.defenseMulDelay = false
 	c.key = -1
 	c.id = -1
+	c.index = -1
+	c.runorder = -1
 	c.helperId = 0
 	c.helperIndex = -1
 	c.parentIndex = IErr
@@ -3465,6 +3471,54 @@ func (c *Char) numTarget(hid BytecodeValue) BytecodeValue {
 	}
 	return BytecodeInt(n)
 }
+func (c *Char) palfxvar(x int32) int32 {
+	n := int32(0)
+	if x >= 4 {
+		n = 256
+	}
+	if c.palfx != nil && c.palfx.enable {
+		switch x {
+		case -2:
+			n = c.palfx.eInvertblend
+		case -1:
+			n = Btoi(c.palfx.eInvertall)
+		case 0:
+			n = c.palfx.time
+		case 1:
+			n = c.palfx.eAdd[0]
+		case 2:
+			n = c.palfx.eAdd[1]
+		case 3:
+			n = c.palfx.eAdd[2]
+		case 4:
+			n = c.palfx.eMul[0]
+		case 5:
+			n = c.palfx.eMul[1]
+		case 6:
+			n = c.palfx.eMul[2]
+		default:
+			n = 0
+		}
+	}
+	return n
+}
+func (c *Char) palfxvar2(x int32) float32 {
+	n := float32(1)
+	if x > 1 {
+		n = 0
+	}
+	if c.palfx != nil && c.palfx.enable {
+		switch x {
+		case 1:
+			n = c.palfx.eColor
+		case 2:
+			n = c.palfx.eHue
+		default:
+			n = 0
+		}
+	}
+	return n * 256
+}
 func (c *Char) palno() int32 {
 	if c.helperIndex != 0 && c.gi().mugenver[0] != 1 {
 		return 1
@@ -4380,7 +4434,7 @@ func (c *Char) projInit(p *Projectile, pt PosType, x, y float32,
 }
 func (c *Char) setHitdefDefault(hd *HitDef, proj bool) {
 	if !proj {
-		c.targetsOfHitdef = c.targetsOfHitdef[:0]
+		c.hitdefTargets = c.hitdefTargets[:0]
 	}
 	if hd.attr&^int32(ST_MASK) == 0 {
 		hd.attr = 0
@@ -5752,7 +5806,7 @@ func (c *Char) hasTarget(id int32) bool {
 	return false
 }
 func (c *Char) hasTargetOfHitdef(id int32) bool {
-	for _, tid := range c.targetsOfHitdef {
+	for _, tid := range c.hitdefTargets {
 		if tid == id {
 			return true
 		}
@@ -6018,9 +6072,9 @@ func (c *Char) attrCheck(h *HitDef, pid int32, st StateType) bool {
 	//}
 	return true
 }
-func (c *Char) hittable(h *HitDef, e *Char, st StateType,
-	// Check which character should win in case attacks connect in the same frame
-	countercheck func(*HitDef) bool) bool {
+
+// Check which character should win in case attacks connect in the same frame
+func (c *Char) loseHitTrade(h *HitDef, e *Char, st StateType, countercheck func(*HitDef) bool) bool {
 	if !c.attrCheck(h, e.id, st) {
 		return false
 	}
@@ -6054,8 +6108,7 @@ func (c *Char) hittable(h *HitDef, e *Char, st StateType,
 		default:
 			return true
 		}
-		//return !countercheck(&c.hitdef) || c.hasTargetOfHitdef(e.id) || c.hitdef.attr == 0 // https://github.com/ikemen-engine/Ikemen-GO/issues/1410
-		return !countercheck(&c.hitdef)
+		return !countercheck(&c.hitdef) || c.hasTargetOfHitdef(e.id) || c.hitdef.attr == 0
 	}
 	return true
 }
@@ -6658,6 +6711,12 @@ func (c *Char) tick() {
 		c.hitdef.attr = c.hitdef.attr&^int32(ST_MASK) | int32(c.ss.stateType)
 		c.hitdef.lhit = false
 	}
+	// Get Hitdef targets from the buffer. Using a buffer mitigates processing order errors
+	// https://github.com/ikemen-engine/Ikemen-GO/issues/1798
+	if len(c.hitdefTargetsBuffer) > 0 {
+		c.hitdefTargets = append(c.hitdefTargets, c.hitdefTargetsBuffer...)
+		c.hitdefTargetsBuffer = c.hitdefTargetsBuffer[:0]
+	}
 	if c.mctime < 0 {
 		c.mctime = 1
 		if c.mctype == MC_Hit {
@@ -6907,6 +6966,7 @@ func (cl *CharList) clear() {
 }
 func (cl *CharList) add(c *Char) {
 	// Append to run order
+	c.index = int32(len(cl.runOrder)) + 1
 	cl.runOrder = append(cl.runOrder, c)
 	// If any entries in the draw order are empty, use that one
 	i := 0
@@ -6927,6 +6987,7 @@ func (cl *CharList) replace(dc *Char, pn int, idx int32) bool {
 	// Replace run order
 	for i, c := range cl.runOrder {
 		if c.playerNo == pn && c.helperIndex == idx {
+			c.index = int32(i) + 1
 			cl.runOrder[i] = dc
 			ok = true
 			break
@@ -6970,30 +7031,35 @@ func (cl *CharList) action(x float32) {
 	// Run actions for attacking players and helpers
 	for i := 0; i < len(cl.runOrder); i++ {
 		if cl.runOrder[i].ss.moveType == MT_A {
+			cl.runOrder[i].runorder = 1
 			cl.runOrder[i].actionRun()
 		}
 	}
 	// Run actions for idle players
 	for i := 0; i < len(cl.runOrder); i++ {
 		if cl.runOrder[i].helperIndex == 0 && cl.runOrder[i].ss.moveType == MT_I {
+			cl.runOrder[i].runorder = 2
 			cl.runOrder[i].actionRun()
 		}
 	}
 	// Run actions for remaining players
 	for i := 0; i < len(cl.runOrder); i++ {
 		if cl.runOrder[i].helperIndex == 0 {
+			cl.runOrder[i].runorder = 3
 			cl.runOrder[i].actionRun()
 		}
 	}
 	// Run actions for idle helpers
 	for i := 0; i < len(cl.runOrder); i++ {
 		if cl.runOrder[i].helperIndex != 0 && cl.runOrder[i].ss.moveType == MT_I {
+			cl.runOrder[i].runorder = 4
 			cl.runOrder[i].actionRun()
 		}
 	}
 	// Run actions for remaining helpers
 	for i := 0; i < len(cl.runOrder); i++ {
 		if cl.runOrder[i].helperIndex != 0 {
+			cl.runOrder[i].runorder = 5
 			cl.runOrder[i].actionRun()
 		}
 	}
@@ -7114,8 +7180,8 @@ func (cl *CharList) clsn(getter *Char, proj bool) {
 			}
 		}
 		if !proj {
-			c.targetsOfHitdef = append(c.targetsOfHitdef, getter.id)
-			c.mhv.uniqhit = int32(len(c.targetsOfHitdef))
+			c.hitdefTargetsBuffer = append(c.hitdefTargetsBuffer, getter.id)
+			c.mhv.uniqhit = int32(len(c.hitdefTargets))
 		}
 		ghvset := !getter.stchtmp || p2s || !getter.csf(CSF_gethit)
 		// This flag determines if juggle points will be subtracted further down
@@ -7795,7 +7861,7 @@ func (cl *CharList) clsn(getter *Char, proj bool) {
 					(c.asf(ASF_nojugglecheck) || getter.ghv.getJuggle(c.id, c.gi().data.airjuggle) >= p.hitdef.air_juggle) &&
 					(!ap_projhit || p.hitdef.attr&int32(AT_AP) == 0) &&
 					p.curmisstime <= 0 && p.hitpause <= 0 && p.hitdef.hitonce >= 0 &&
-					getter.hittable(&p.hitdef, c, ST_N, func(h *HitDef) bool { return false }) {
+					getter.loseHitTrade(&p.hitdef, c, ST_N, func(h *HitDef) bool { return false }) {
 					orghittmp := getter.hittmp
 					if getter.csf(CSF_gethit) {
 						getter.hittmp = int8(Btoi(getter.ghv.fallf)) + 1
@@ -7872,9 +7938,8 @@ func (cl *CharList) clsn(getter *Char, proj bool) {
 				}
 				if c.hitdef.hitonce >= 0 && !c.hasTargetOfHitdef(getter.id) &&
 					(c.hitdef.reversal_attr <= 0 || !getter.hasTargetOfHitdef(c.id)) &&
-					(getter.hittmp < 2 || c.asf(ASF_nojugglecheck) || !c.hasTarget(getter.id) ||
-						getter.ghv.getJuggle(c.id, c.gi().data.airjuggle) >= c.juggle) &&
-					getter.hittable(&c.hitdef, c, c.ss.stateType, func(h *HitDef) bool {
+					(getter.hittmp < 2 || c.asf(ASF_nojugglecheck) || !c.hasTarget(getter.id) || getter.ghv.getJuggle(c.id, c.gi().data.airjuggle) >= c.juggle) &&
+					getter.loseHitTrade(&c.hitdef, c, c.ss.stateType, func(h *HitDef) bool {
 						return (c.atktmp >= 0 || !getter.hasTarget(c.id)) &&
 							c.attrCheck(h, getter.id, getter.ss.stateType) &&
 							c.hitCheck(getter)
@@ -7926,7 +7991,7 @@ func (cl *CharList) clsn(getter *Char, proj bool) {
 									}
 									getter.ghv.fallf = getter.ghv.fallf || fall
 
-									getter.targetsOfHitdef = append(getter.targetsOfHitdef, c.id)
+									getter.hitdefTargetsBuffer = append(getter.hitdefTargetsBuffer, c.id)
 									if getter.hittmp == 0 {
 										getter.hittmp = -1
 									}
