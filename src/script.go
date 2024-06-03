@@ -3942,7 +3942,7 @@ func triggerFunctions(l *lua.LState) {
 		return 1
 	})
 	luaRegister(l, "roundstate", func(*lua.LState) int {
-		l.Push(lua.LNumber(sys.debugWC.roundState()))
+		l.Push(lua.LNumber(sys.roundState()))
 		return 1
 	})
 	luaRegister(l, "screenheight", func(*lua.LState) int {
@@ -4927,7 +4927,7 @@ func triggerFunctions(l *lua.LState) {
 				} else {
 					winp = 0
 				}
-			} else if sys.winTeam >= 0 || sys.debugWC.roundState() >= 3 {
+			} else if sys.winTeam >= 0 || sys.roundState() >= 3 {
 				winp = int32(sys.winTeam) + 1
 			}
 		}
