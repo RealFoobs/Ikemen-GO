@@ -1603,7 +1603,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 						}
 						pal[i] = uint32(rgba[3])<<24 | uint32(rgba[2])<<16 | uint32(rgba[1])<<8 | uint32(rgba[0])
 					}
-					pal[0] = uint32(0)
+					if sff.header.Ver2 == 0 {
+						pal[0] = uint32(0)
+					}
 					idx = i
 				}
 			}
