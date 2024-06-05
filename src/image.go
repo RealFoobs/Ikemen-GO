@@ -1543,6 +1543,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 	if err != nil {
 		return nil, nil, err
 	}
+	read := func(x interface{}) error {
+		return binary.Read(f, binary.LittleEndian, x)
+	}
 	defer func() { chk(f.Close()) }()
 	h := &SffHeader{}
 	var lofs, tofs uint32
@@ -1553,8 +1556,83 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 	sff.header.Ver1 = h.Ver1
 	sff.header.Ver2 = h.Ver2
 	sff.header.Ver3 = h.Ver3
-	read := func(x interface{}) error {
-		return binary.Read(f, binary.LittleEndian, x)
+
+	sff.header.FirstSpriteHeaderOffset = h.FirstSpriteHeaderOffset
+	sff.header.FirstPaletteHeaderOffset = h.FirstPaletteHeaderOffset
+	sff.header.NumberOfSprites = h.NumberOfSprites
+	sff.header.NumberOfPalettes = h.NumberOfPalettes
+	if sff.header.Ver0 != 1 {
+		uniquePals := make(map[[2]int16]int)
+		for i := 0; i < int(sff.header.NumberOfPalettes); i++ {
+			f.Seek(int64(sff.header.FirstPaletteHeaderOffset)+int64(i*16), 0)
+			var gn_ [3]int16
+			if err := read(gn_[:]); err != nil {
+				
+			}
+			var link uint16
+			if err := read(&link); err != nil {
+				
+			}
+			var ofs, siz uint32
+			if err := read(&ofs); err != nil {
+				
+			}
+			if err := read(&siz); err != nil {
+				
+			}
+			var pal []uint32
+			var idx int
+			if old, ok := uniquePals[[...]int16{gn_[0], gn_[1]}]; ok {
+				idx = old
+				pal = sff.palList.Get(old)
+				sys.errLog.Printf("%v duplicated palette: %v,%v (%v/%v)\n", filename, gn_[0], gn_[1], i+1, sff.header.NumberOfPalettes)
+			} else if siz == 0 {
+				idx = int(link)
+				pal = sff.palList.Get(idx)
+			} else {
+				f.Seek(int64(lofs+ofs), 0)
+				if gn_[0] == 1 {
+					pal = make([]uint32, 256)
+					var rgba [4]byte
+					for i := 0; i < int(siz)/4 && i < len(pal); i++ {
+						if err := read(rgba[:]); err != nil {
+							
+						}
+						if sff.header.Ver2 == 0 {
+							rgba[3] = 255
+						}
+						pal[i] = uint32(rgba[3])<<24 | uint32(rgba[2])<<16 | uint32(rgba[1])<<8 | uint32(rgba[0])
+					}
+					pal[0] = uint32(0)
+					idx = i
+				}
+			}
+			uniquePals[[...]int16{gn_[0], gn_[1]}] = idx
+			sff.palList.SetSource(i, pal)
+			if gn_[0] == 1 && gn_[1] > 0 && gn_[1] <= MaxPalNo {
+				sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] = idx
+				selPal = append(selPal, int32(gn_[1]))
+			}
+			sff.palList.numcols[[...]int16{gn_[0], gn_[1]}] = int(gn_[2])
+		}
+	}
+
+	//selectable palettes
+	if h.Ver0 != 1 && char {
+		//for i := 0; i < MaxPalNo; i++ {
+		for i := 0; i < int(h.NumberOfPalettes); i++ {
+			f.Seek(int64(h.FirstPaletteHeaderOffset)+int64(i*16), 0)
+			var gn_ [3]int16
+			if err := read(gn_[:]); err != nil {
+				return nil, nil, err
+			}
+			if gn_[0] == 1 && gn_[1] >= 1 && gn_[1] <= MaxPalNo {
+				selPal = append(selPal, int32(gn_[1]))
+			}
+			if len(selPal) >= MaxPalNo {
+				break
+			}
+		}
 	}
 	
 	var shofs, xofs, size uint32 = h.FirstSpriteHeaderOffset, 0, 0
@@ -1653,7 +1731,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 							}
 						}
 						f.Seek(int64(lofs+plXofs), 0)
-						if spriteList[i].palidx > 0 || isPortrait{
+						if (sff.header.Ver0 == 1 && spriteList[i].palidx > 0) || (sff.header.Ver0 == 2 && spriteList[i].palidx != sff.palList.PalTable[[2]int16{1, 1}] ) || isPortrait{
 							spriteList[i].Pal = make([]uint32, 256)
 							var rgba [4]byte
 							for j := 0; j < int(plSize)/4 && j < len(spriteList[i].Pal); j++ {
@@ -1670,7 +1748,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 								spriteList[i].Pal[j] = uint32(rgba[3])<<24 | uint32(rgba[2])<<16 | uint32(rgba[1])<<8 | uint32(rgba[0])
 							}
 						}
-						spriteList[i].palidx = 0
+						if sff.header.Ver0 == 1 {
+							spriteList[i].palidx = 0
+						}
 					}
 				}
 				if prev == nil {
@@ -1692,83 +1772,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 			shofs += 28
 		}
 	}
-	sff.header.FirstSpriteHeaderOffset = h.FirstSpriteHeaderOffset
-	sff.header.FirstPaletteHeaderOffset = h.FirstPaletteHeaderOffset
-	sff.header.NumberOfSprites = h.NumberOfSprites
-	sff.header.NumberOfPalettes = h.NumberOfPalettes
-	if sff.header.Ver0 != 1 {
-		uniquePals := make(map[[2]int16]int)
-		for i := 0; i < int(sff.header.NumberOfPalettes); i++ {
-			f.Seek(int64(sff.header.FirstPaletteHeaderOffset)+int64(i*16), 0)
-			var gn_ [3]int16
-			if err := read(gn_[:]); err != nil {
-				
-			}
-			var link uint16
-			if err := read(&link); err != nil {
-				
-			}
-			var ofs, siz uint32
-			if err := read(&ofs); err != nil {
-				
-			}
-			if err := read(&siz); err != nil {
-				
-			}
-			var pal []uint32
-			var idx int
-			if old, ok := uniquePals[[...]int16{gn_[0], gn_[1]}]; ok {
-				idx = old
-				pal = sff.palList.Get(old)
-				sys.errLog.Printf("%v duplicated palette: %v,%v (%v/%v)\n", filename, gn_[0], gn_[1], i+1, sff.header.NumberOfPalettes)
-			} else if siz == 0 {
-				idx = int(link)
-				pal = sff.palList.Get(idx)
-			} else {
-				f.Seek(int64(lofs+ofs), 0)
-				if gn_[0] == 1 {
-					pal = make([]uint32, 256)
-					var rgba [4]byte
-					for i := 0; i < int(siz)/4 && i < len(pal); i++ {
-						if err := read(rgba[:]); err != nil {
-							
-						}
-						if sff.header.Ver2 == 0 {
-							rgba[3] = 255
-						}
-						pal[i] = uint32(rgba[3])<<24 | uint32(rgba[2])<<16 | uint32(rgba[1])<<8 | uint32(rgba[0])
-					}
-					pal[0] = uint32(0)
-					idx = i
-				}
-			}
-			uniquePals[[...]int16{gn_[0], gn_[1]}] = idx
-			sff.palList.SetSource(i, pal)
-			if gn_[0] == 1 && gn_[1] > 0 && gn_[1] <= MaxPalNo {
-				sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] = idx
-				selPal = append(selPal, int32(gn_[1]))
-			}
-			sff.palList.numcols[[...]int16{gn_[0], gn_[1]}] = int(gn_[2])
-		}
-	}
 
-	//selectable palettes
-	if h.Ver0 != 1 && char {
-		//for i := 0; i < MaxPalNo; i++ {
-		for i := 0; i < int(h.NumberOfPalettes); i++ {
-			f.Seek(int64(h.FirstPaletteHeaderOffset)+int64(i*16), 0)
-			var gn_ [3]int16
-			if err := read(gn_[:]); err != nil {
-				return nil, nil, err
-			}
-			if gn_[0] == 1 && gn_[1] >= 1 && gn_[1] <= MaxPalNo {
-				selPal = append(selPal, int32(gn_[1]))
-			}
-			if len(selPal) >= MaxPalNo {
-				break
-			}
-		}
-	}
 	var U *os.File
 	x := 0
 	if h.Ver0 == 1 {
