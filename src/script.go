@@ -3945,6 +3945,10 @@ func triggerFunctions(l *lua.LState) {
 		l.Push(lua.LNumber(sys.roundState()))
 		return 1
 	})
+	luaRegister(l, "introstate", func(*lua.LState) int {
+		l.Push(lua.LNumber(sys.introState()))
+		return 1
+	})
 	luaRegister(l, "screenheight", func(*lua.LState) int {
 		l.Push(lua.LNumber(sys.screenHeight()))
 		return 1

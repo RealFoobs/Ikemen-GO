@@ -301,6 +301,7 @@ var triggerMap = map[string]int{
 	"roundno":           1,
 	"roundsexisted":     1,
 	"roundstate":        1,
+	"introstate":        1,
 	"screenpos":         1,
 	"screenheight":      1,
 	"screenwidth":       1,
@@ -2243,6 +2244,8 @@ func (c *Compiler) expValue(out *BytecodeExp, in *string,
 		out.append(OC_ex_, OC_ex_roundsexisted)
 	case "roundstate":
 		out.append(OC_roundstate)
+	case "introstate":
+		out.append(OC_ex2_, OC_ex2_introstate)
 	case "screenheight":
 		out.append(OC_screenheight)
 	case "screenpos":
@@ -5596,8 +5599,17 @@ func (c *Compiler) stateBlock(line *string, bl *StateBlock, root bool,
 		default:
 			scf, ok := c.scmap[c.token]
 			//helperはステコンとリダイレクトの両方で使う名称なのでチェックする
-			if c.token == "helper" && ((*line)[0] == ',' || (*line)[0] == '(') {
-				ok = false
+			if c.token == "helper" {
+				//peek ahead to see if this is a redirect
+				c.scan(line)
+				if len(c.token) > 0 {
+					if c.token[0] == ',' || c.token[0] == '(' {
+						ok = false
+					}
+				}
+				//reset things to "undo" the peek ahead
+				*line = (c.token + (*line))
+				c.token = "helper"
 			}
 			if ok {
 				scname := c.token
