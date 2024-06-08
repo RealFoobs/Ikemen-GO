@@ -1677,7 +1677,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 					//} else if int(indexOfPrevious) < i {
 					//TODO: read previously skipped sprite and palette
 				} else {
-					spriteList[i].palidx = 0 //index out of range
+					if spriteList[i].palidx < 0 {
+						spriteList[i].palidx = 0 //index out of range
+					}
 				}
 			} else {
 				switch h.Ver0 {
