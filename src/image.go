@@ -1735,7 +1735,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 							}
 						}
 						f.Seek(int64(lofs+plXofs), 0)
-						if (sff.header.Ver0 == 1 && spriteList[i].palidx > 0) || (sff.header.Ver0 == 2 && spriteList[i].palidx != sff.palList.PalTable[[2]int16{1, 1}] ) || isPortrait{
+						if (sff.header.Ver0 == 1 && spriteList[i].palidx > 0) || (sff.header.Ver0 == 2 && (spriteList[i].palidx != sff.palList.PalTable[[2]int16{1, 1}] || len(selPal) < 1) ) || isPortrait{
 							spriteList[i].Pal = make([]uint32, 256)
 							var rgba [4]byte
 							for j := 0; j < int(plSize)/4 && j < len(spriteList[i].Pal); j++ {
