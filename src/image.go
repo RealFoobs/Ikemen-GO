@@ -1561,6 +1561,11 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 	sff.header.FirstPaletteHeaderOffset = h.FirstPaletteHeaderOffset
 	sff.header.NumberOfSprites = h.NumberOfSprites
 	sff.header.NumberOfPalettes = h.NumberOfPalettes
+	if sff.header.Ver0 == 2 {
+		for i := 1; i <= MaxPalNo; i++ {
+			delete(sff.palList.PalTable, [...]int16{1, int16(i)})
+		}
+	}
 	if sff.header.Ver0 != 1 {
 		uniquePals := make(map[[2]int16]int)
 		for i := 0; i < int(sff.header.NumberOfPalettes); i++ {
@@ -1615,7 +1620,6 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool, s map[
 				sff.palList.PalTable[[...]int16{gn_[0], gn_[1]}] = idx
 				selPal = append(selPal, int32(gn_[1]))
 			}
-			sff.palList.numcols[[...]int16{gn_[0], gn_[1]}] = int(gn_[2])
 		}
 	}
 
