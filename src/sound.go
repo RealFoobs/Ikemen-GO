@@ -115,7 +115,7 @@ func (b *StreamLooper) Stream(samples [][2]float64) (n int, ok bool) {
 	}
 	for len(samples) > 0 {
 		sn, sok := b.s.Stream(samples)
-		if !sok || b.s.Position() >= b.loopend {
+		if !sok || (b.s.Position() >= b.loopend && b.loopend < b.s.Len()) {
 			if b.loopcount > 0 {
 				b.loopcount--
 			}
@@ -156,6 +156,7 @@ func (b *StreamLooper) Seek(p int) error {
 type Bgm struct {
 	filename   string
 	bgmVolume  int
+	volRestore int
 	loop       int
 	streamer   beep.StreamSeekCloser
 	ctrl       *beep.Ctrl
@@ -540,7 +541,7 @@ type SoundChannel struct {
 	stopOnChangeState bool
 }
 
-func (s *SoundChannel) Play(sound *Sound, loop int, freqmul float32, loopStart, loopEnd, startPosition int) {
+func (s *SoundChannel) Play(sound *Sound, loop int32, freqmul float32, loopStart, loopEnd, startPosition int) {
 	if sound == nil {
 		return
 	}
@@ -550,7 +551,7 @@ func (s *SoundChannel) Play(sound *Sound, loop int, freqmul float32, loopStart, 
 	if loop < 0 {
 		loopCount = -1
 	} else {
-		loopCount = int(Max(int32(loop), 1))
+		loopCount = int(Max(loop, 1))
 	}
 	looper := newStreamLooper(s.streamer, loopCount, loopStart, loopEnd)
 	s.sfx = &SoundEffect{streamer: looper, volume: 256, priority: 0, channel: -1, loop: int32(loopCount), freqmul: freqmul}
@@ -635,7 +636,8 @@ func (s *SoundChannel) SetLoopPoints(loopstart, loopend int) {
 // SoundChannels (collection of prioritised sound channels)
 
 type SoundChannels struct {
-	channels []SoundChannel
+	channels  []SoundChannel
+	volResume []float32
 }
 
 func newSoundChannels(size int32) *SoundChannels {
@@ -646,12 +648,15 @@ func newSoundChannels(size int32) *SoundChannels {
 func (s *SoundChannels) SetSize(size int32) {
 	if size > s.count() {
 		c := make([]SoundChannel, size-s.count())
+		v := make([]float32, size-s.count())
 		s.channels = append(s.channels, c...)
+		s.volResume = append(s.volResume, v...)
 	} else if size < s.count() {
 		for i := s.count() - 1; i >= size; i-- {
 			s.channels[i].Stop()
 		}
 		s.channels = s.channels[:size]
+		s.volResume = s.volResume[:size]
 	}
 }
 func (s *SoundChannels) count() int32 {

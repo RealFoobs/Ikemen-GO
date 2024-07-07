@@ -517,8 +517,8 @@ func systemScriptInit(l *lua.LState) {
 			l.RaiseError("\nPlayer not found: %v\n", pn)
 		}
 		f, lw, lp, stopgh, stopcs := false, false, false, false, false
-		var g, n, ch, vo, priority int32 = -1, 0, -1, 100, 0
-		var loopstart, loopend, startposition, lc int = 0, 0, 0, 0
+		var g, n, ch, vo, priority, lc int32 = -1, 0, -1, 100, 0, 0
+		var loopstart, loopend, startposition int = 0, 0, 0
 		var p, fr float32 = 0, 1
 		x := &sys.chars[pn-1][0].pos[0]
 		ls := sys.chars[pn-1][0].localscl
@@ -562,7 +562,7 @@ func systemScriptInit(l *lua.LState) {
 			startposition = int(numArg(l, 14))
 		}
 		if l.GetTop() >= 15 {
-			lc = int(numArg(l, 15))
+			lc = int32(numArg(l, 15))
 		}
 		if l.GetTop() >= 15 { // StopOnGetHit
 			stopgh = boolArg(l, 16)
@@ -3482,6 +3482,10 @@ func triggerFunctions(l *lua.LState) {
 		l.Push(ln)
 		return 1
 	})
+	luaRegister(l, "groundlevel", func(*lua.LState) int {
+		l.Push(lua.LNumber(sys.debugWC.groundLevel))
+		return 1
+	})
 	luaRegister(l, "guardcount", func(*lua.LState) int {
 		l.Push(lua.LNumber(sys.debugWC.guardCount))
 		return 1
@@ -4248,11 +4252,11 @@ func triggerFunctions(l *lua.LState) {
 		return 1
 	})
 	luaRegister(l, "winspecial", func(*lua.LState) int {
-		l.Push(lua.LBool(sys.debugWC.winType(WT_S)))
+		l.Push(lua.LBool(sys.debugWC.winType(WT_Special)))
 		return 1
 	})
 	luaRegister(l, "winhyper", func(*lua.LState) int {
-		l.Push(lua.LBool(sys.debugWC.winType(WT_H)))
+		l.Push(lua.LBool(sys.debugWC.winType(WT_Hyper)))
 		return 1
 	})
 
